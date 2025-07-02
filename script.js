@@ -1,6 +1,31 @@
 window.onload = () => {
   console.log("Window loaded...");
 
+  const { Engine, Render, Runner, Bodies, Composite, Events } = Matter;
+  const charWidth = 30;
+
+  const worldState = {
+    cursor: {
+      x: charWidth,
+      y: window.innerHeight - charWidth,
+      increment: () => {
+        worldState.cursor.x =
+          worldState.cursor.x + charWidth <= window.innerWidth - charWidth
+            ? worldState.cursor.x + charWidth
+            : charWidth;
+      },
+      carriageReturn: () => {
+        worldState.cursor.x = charWidth;
+      },
+      backSpace: () => {
+        worldState.cursor.x =
+          worldState.cursor.x - charWidth >= 0
+            ? worldState.cursor.x - charWidth
+            : charWidth;
+      },
+    },
+  };
+
   // create the box that contains our world.
   const createSandBox = () => {
     return [
@@ -8,13 +33,13 @@ window.onload = () => {
         x: window.innerWidth / 2,
         y: 0,
         w: window.innerWidth,
-        l: 10,
+        l: 20,
         options: { isStatic: true },
       },
       {
         x: 0,
         y: window.innerHeight / 2,
-        w: 10,
+        w: 20,
         l: window.innerHeight,
         options: { isStatic: true },
       },
@@ -22,30 +47,22 @@ window.onload = () => {
         x: window.innerWidth / 2,
         y: window.innerHeight,
         w: window.innerWidth,
-        l: 10,
+        l: 20,
         options: { isStatic: true },
       },
       {
         x: window.innerWidth,
         y: window.innerHeight / 2,
-        w: 10,
+        w: 20,
         l: window.innerHeight,
         options: { isStatic: true },
       },
     ].map((i) => new Bodies.rectangle(i.x, i.y, i.w, i.l, i.options));
   };
 
-  // module aliases
-  var Engine = Matter.Engine,
-    Render = Matter.Render,
-    Runner = Matter.Runner,
-    Bodies = Matter.Bodies,
-    Composite = Matter.Composite,
-    Events = Matter.Events;
-
   // create an engine
   var engine = Engine.create({
-    gravity: { x: 0.0, y: 0.5 },
+    gravity: { x: 0.0, y: -1.5 },
   });
 
   // create a renderer
@@ -55,30 +72,29 @@ window.onload = () => {
     options: {
       width: window.innerWidth,
       height: window.innerHeight,
+      wireframes: false,
+      background: "black",
     },
   });
 
-  Events.on(render, "afterRender", (event) => {
-    console.log("*** afterEvent ***");
-    console.log(render.context);
-    console.log(event);
+  // Custom render function to put character in box.
+  Events.on(render, "afterRender", () => {
     const context = render.context;
-
-    for (const body of world.bodies) {
+    context.fillStyle = "white";
+    context.font = "bold 28px sans-serif";
+    for (const body of engine.world.bodies) {
       if (body.character) {
         context.save();
         context.translate(body.position.x, body.position.y);
         context.rotate(body.angle);
-        context.fillText(body.character, 0, 0);
+        context.fillText(body.character, -10, 10);
         context.restore();
       }
     }
   });
 
   // Keep track of objects in the world.
-  const bodyBox = [
-    Bodies.polygon(400, 300, 3, 35, { velocity: { x: 1, y: 1 } }),
-  ];
+  const bodyBox = [];
 
   Composite.add(engine.world, [...bodyBox, ...createSandBox()]);
 
@@ -94,23 +110,27 @@ window.onload = () => {
   // Attach my key listeners...
   document.addEventListener("keydown", (event) => {
     event.preventDefault();
-    console.log("Key hit: ");
-    console.log(event.key);
-    console.log(bodyBox);
 
     if (event.key === "Backspace") {
-      console.log("Removing an item...");
       const oldBody = bodyBox.pop();
       Composite.remove(engine.world, oldBody);
+      worldState.cursor.backSpace();
       return;
-    } else {
-      console.log("Adding a new item...");
-      const newBody = Bodies.rectangle(400, 200, 80, 80);
+    } else if (event.key === "Enter") {
+      worldState.cursor.carriageReturn();
+      return;
+    } else if (event.key !== "Shift") {
+      const newBody = Bodies.rectangle(
+        worldState.cursor.x,
+        worldState.cursor.y,
+        charWidth,
+        charWidth,
+        { render: { strokeStyle: "black", fillStyle: "black" } },
+      );
       newBody.character = event.key;
       bodyBox.push(newBody);
       Composite.add(engine.world, newBody);
+      worldState.cursor.increment();
     }
-    console.log("*** done ***");
-    console.log(bodyBox);
   });
 };
