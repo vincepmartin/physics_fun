@@ -40,7 +40,8 @@ window.onload = () => {
     Render = Matter.Render,
     Runner = Matter.Runner,
     Bodies = Matter.Bodies,
-    Composite = Matter.Composite;
+    Composite = Matter.Composite,
+    Events = Matter.Events;
 
   // create an engine
   var engine = Engine.create({
@@ -57,14 +58,27 @@ window.onload = () => {
     },
   });
 
-  // create two boxes and a ground
-  const ship = Bodies.polygon(400, 300, 3, 35, { velocity: { x: 1, y: 1 } });
-  var boxA = Bodies.rectangle(400, 200, 80, 80);
-  var boxB = Bodies.rectangle(450, 50, 80, 80);
-  // var ground = Bodies.rectangle(400, 610, 810, 60, { isStatic: true });
+  Events.on(render, "afterRender", (event) => {
+    console.log("*** afterEvent ***");
+    console.log(render.context);
+    console.log(event);
+    const context = render.context;
 
-  // add all of the bodies to the world
-  const bodyBox = [ship, boxA, boxB];
+    for (const body of world.bodies) {
+      if (body.character) {
+        context.save();
+        context.translate(body.position.x, body.position.y);
+        context.rotate(body.angle);
+        context.fillText(body.character, 0, 0);
+        context.restore();
+      }
+    }
+  });
+
+  // Keep track of objects in the world.
+  const bodyBox = [
+    Bodies.polygon(400, 300, 3, 35, { velocity: { x: 1, y: 1 } }),
+  ];
 
   Composite.add(engine.world, [...bodyBox, ...createSandBox()]);
 
@@ -92,10 +106,10 @@ window.onload = () => {
     } else {
       console.log("Adding a new item...");
       const newBody = Bodies.rectangle(400, 200, 80, 80);
+      newBody.character = event.key;
       bodyBox.push(newBody);
       Composite.add(engine.world, newBody);
     }
-
     console.log("*** done ***");
     console.log(bodyBox);
   });
