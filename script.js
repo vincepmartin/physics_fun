@@ -93,7 +93,7 @@ window.onload = () => {
     options: {
       width: window.innerWidth,
       height: window.innerHeight,
-      wireframes: false,
+      wireframes: true,
       background: "black",
     },
   });
@@ -108,7 +108,7 @@ window.onload = () => {
         context.save();
         context.translate(body.position.x, body.position.y);
         context.rotate(body.angle);
-        context.fillText(body.character, -10, 10);
+        context.fillText(body.character, -(charWidth / 2), charWidth / 2);
         context.restore();
       }
     }
