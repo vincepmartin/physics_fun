@@ -8,11 +8,32 @@ window.onload = () => {
     cursor: {
       x: charWidth,
       y: window.innerHeight - charWidth,
-      increment: () => {
+      increment: (onHitEnd) => {
         worldState.cursor.x =
           worldState.cursor.x + charWidth <= window.innerWidth - charWidth
             ? worldState.cursor.x + charWidth
-            : charWidth;
+            : onHitEnd();
+      },
+      newLine: () => {
+        while (
+          worldState.cursor.x <= window.innerWidth - charWidth &&
+          worldState.cursor.x >= charWidth
+        ) {
+          let newBody = Bodies.rectangle(
+            worldState.cursor.x,
+            worldState.cursor.y,
+            charWidth,
+            charWidth,
+            { render: { strokeStyle: "black", fillStyle: "black" } },
+          );
+          newBody.character = " ";
+          console.log("Adding new body...");
+          console.log(newBody);
+          bodyBox.push(newBody);
+          Composite.add(engine.world, newBody);
+          worldState.cursor.increment(() => worldState.cursor.x + charWidth);
+        }
+        worldState.cursor.carriageReturn();
       },
       carriageReturn: () => {
         worldState.cursor.x = charWidth;
@@ -117,7 +138,7 @@ window.onload = () => {
       worldState.cursor.backSpace();
       return;
     } else if (event.key === "Enter") {
-      worldState.cursor.carriageReturn();
+      worldState.cursor.newLine();
       return;
     } else if (event.key !== "Shift") {
       const newBody = Bodies.rectangle(
@@ -130,7 +151,7 @@ window.onload = () => {
       newBody.character = event.key;
       bodyBox.push(newBody);
       Composite.add(engine.world, newBody);
-      worldState.cursor.increment();
+      worldState.cursor.increment(() => charWidth);
     }
   });
 };
