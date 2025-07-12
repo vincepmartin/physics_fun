@@ -1,0 +1,1 @@
+Just a silly time, messing around with matter.js by first writing some things myself and then slop coding weird features on top so that I can get more familar with CodeCompanion via neovim and anthropic.
